@@ -1,119 +1,136 @@
+import json
 import time
 import requests
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from typing import List, Optional
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
 
 # ==========================================
 # ❄️ CORE DO FRAMEWORK (FROZEN SPOTS)
 # ==========================================
 
-class Token(BaseModel):
-    type: str
-    value: str
-
-class ASTNode(BaseModel):
-    type: str
-    children: List['ASTNode'] = []
-    metadata: dict = {}
-
-class ExecutionResult(BaseModel):
-    success: bool
-    output: str
-    execution_time_ms: float
-
 class CodeWeaverEngine:
-    def __init__(self, lexer, parser, interpreter, analyzer_url: str):
+    def __init__(self, lexer, parser, interpreter, analyzer_url, notifier_url):
         self.lexer = lexer
         self.parser = parser
         self.interpreter = interpreter
         self.analyzer_url = analyzer_url
+        self.notifier_url = notifier_url
 
-    def compile_and_run(self, source_code: str) -> ExecutionResult:
+    def compile_and_run(self, source_code):
         start_time = time.time()
         
-        # Phase 1: Análise Léxica
+        # 1. Lexer
         tokens = self.lexer.tokenize(source_code)
+        # 2. Parser
+        ast = self.parser.parse(tokens)
         
-        # Phase 2: Análise Sintática
-        raw_ast = self.parser.parse(tokens)
-        
-        # Phase 3: Chamada ao Microserviço de Otimização (Network Call)
+        # 3. Microserviço (Optimizer)
         try:
-            response = requests.post(f"{self.analyzer_url}/optimize", json=raw_ast.dict())
-            optimized_ast_data = response.json()
-            optimized_ast = ASTNode(**optimized_ast_data)
-        except Exception:
-            optimized_ast = raw_ast # Fallback se o serviço estiver offline
+            resp = requests.post(f"{self.analyzer_url}/optimize", json=ast)
+            if resp.status_code == 200:
+                ast = resp.json()
+        except:
+            pass # Fallback
+            
+        # 4. Interpreter
+        output = self.interpreter.execute(ast)
         
-        # Phase 4: Execução
-        output = self.interpreter.execute(optimized_ast)
+        execution_time = (time.time() - start_time) * 1000
         
-        end_time = time.time()
-        execution_time = (end_time - start_time) * 1000
+        # 5. Microserviço (Notifier)
+        try:
+            requests.post(f"{self.notifier_url}/notify", json={
+                "message": f"Código processado com sucesso em {execution_time:.2f}ms",
+                "output": output
+            })
+        except:
+            pass
 
-        return ExecutionResult(
-            success=True,
-            output=output,
-            execution_time_ms=round(execution_time, 2)
-        )
+        return {
+            "output": output,
+            "execution_time_ms": round(execution_time, 2)
+        }
 
 # ==========================================
-# 🚀 CUSTOMIZAÇÃO (HOTSPOTS) - MathLang
+# 🚀 CUSTOMIZAÇÃO (HOTSPOTS)
 # ==========================================
 
 class MathLangLexer:
-    def tokenize(self, source_code: str) -> List[Token]:
-        parts = source_code.strip().split()
+    def tokenize(self, code):
+        parts = code.strip().split()
         tokens = []
         if parts and parts[0] == "PRINT":
-            tokens.append(Token(type="KEYWORD", value="PRINT"))
+            tokens.append({"type": "KEYWORD", "value": "PRINT"})
             if len(parts) > 1:
-                tokens.append(Token(type="NUMBER", value=parts[1]))
+                tokens.append({"type": "NUMBER", "value": parts[1]})
         return tokens
 
 class MathLangParser:
-    def parse(self, tokens: List[Token]) -> ASTNode:
-        if not tokens: return ASTNode(type="Empty")
-        node = ASTNode(type="PrintStatement")
+    def parse(self, tokens):
+        node = {"type": "PrintStatement", "children": [], "metadata": {}}
         for t in tokens:
-            if t.type == "NUMBER":
-                node.children.append(ASTNode(type="LiteralNumber", metadata={"value": t.value}))
+            if t["type"] == "NUMBER":
+                node["children"].append({"type": "LiteralNumber", "metadata": {"value": t["value"]}})
         return node
 
 class MathLangInterpreter:
-    def execute(self, ast: ASTNode) -> str:
-        if ast.type == "PrintStatement" and ast.children:
-            return f"[MathLang Output]: {ast.children[0].metadata.get('value')}"
-        return "Nada a executar."
+    def execute(self, ast):
+        if ast["type"] == "PrintStatement" and ast["children"]:
+            val = ast["children"][0]["metadata"].get("value", "0")
+            
+            # Verifica se foi otimizado pelo microserviço
+            prefix = "[MathLang Output]"
+            if ast.get("metadata", {}).get("optimized"):
+                prefix = f"{prefix} (OPTIMIZED)"
+                
+            return f"{prefix}: {val}"
+        return "Comando não reconhecido."
 
 # ==========================================
-# 🌐 API GATEWAY & WEB INTERFACE
+# 🌐 GATEWAY SERVER
 # ==========================================
-
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
 
 engine = CodeWeaverEngine(
-    lexer=MathLangLexer(),
-    parser=MathLangParser(),
-    interpreter=MathLangInterpreter(),
-    analyzer_url="http://localhost:5001"
+    MathLangLexer(), 
+    MathLangParser(), 
+    MathLangInterpreter(), 
+    "http://localhost:5001",
+    "http://localhost:5002"
 )
 
-class Submission(BaseModel):
-    code: str
+class GatewayHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/':
+            try:
+                # Tenta ler o arquivo index.html na mesma pasta
+                file_path = os.path.join(os.path.dirname(__file__), 'index.html')
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+            except Exception as e:
+                self.send_error(500, f"Erro ao carregar index.html: {e}")
+        else:
+            self.send_error(404)
 
-@app.post("/api/compile")
-def compile_code(sub: Submission):
-    return engine.compile_and_run(sub.code)
-
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    def do_POST(self):
+        if self.path == '/api/compile':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            result = engine.compile_and_run(data.get('code', ''))
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode('utf-8'))
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    server = HTTPServer(('0.0.0.0', 5000), GatewayHandler)
+    print("Gateway rodando na porta 5000...")
+    server.serve_forever()
