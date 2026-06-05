@@ -16,8 +16,7 @@ O projeto é dividido em serviços independentes que se comunicam via HTTP:
 CodeWeaver/
 ├── gateway/
 │   ├── app.py          # Engine do Framework + Hotspots (MathLang)
-│   └── templates/
-│       └── index.html  # Interface Frontend
+│   └── index.html      # Interface Frontend
 ├── analyzer/
 │   └── app.py          # Serviço de Otimização Semântica
 ├── notifier/
@@ -32,19 +31,19 @@ Para rodar o projeto completo, abra **3 terminais** diferentes e execute os coma
 ### 1. Iniciar o Analyzer
 ```bash
 cd analyzer
-python app.py
+python3 app.py
 ```
 
 ### 2. Iniciar o Notifier
 ```bash
 cd notifier
-python app.py
+python3 app.py
 ```
 
 ### 3. Iniciar o Gateway (Principal)
 ```bash
 cd gateway
-python app.py
+python3 app.py
 ```
 
 Após iniciar os três serviços, acesse:
