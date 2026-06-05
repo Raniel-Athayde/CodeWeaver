@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      LEXER_URL: http://lexer-service:5001
+      PARSER_URL: http://parser-service:5002
+      OPTIMIZER_URL: http://optimizer-service:5003
+      BACKEND_URL: http://backend-service:5004
+      ANALYSIS_URL: http://analysis-service:5005
+      NOTIFICATION_URL: http://notification-service:5006
+    depends_on:
+      - lexer-service
+      - parser-service
+      - optimizer-service
+      - backend-service
+      - analysis-service
+      - notification-service
+
+  lexer-service:
+    build: ./lexer-service
+    ports:
+      - "5001:5001"
+    environment:
+      SERVICE_NAME: lexer-service
+      NOTIFICATION_URL: http://notification-service:5006
+
+  parser-service:
+    build: ./parser-service
+    ports:
+      - "5002:5002"
+    environment:
+      SERVICE_NAME: parser-service
+      NOTIFICATION_URL: http://notification-service:5006
+
+  optimizer-service:
+    build: ./optimizer-service
+    ports:
+      - "5003:5003"
+    environment:
+      SERVICE_NAME: optimizer-service
+      NOTIFICATION_URL: http://notification-service:5006
+
+  backend-service:
+    build: ./backend-service
+    ports:
+      - "5004:5004"
+    environment:
+      SERVICE_NAME: backend-service
+      NOTIFICATION_URL: http://notification-service:5006
+
+  analysis-service:
+    build: ./analysis-service
+    ports:
+      - "5005:5005"
+    environment:
+      SERVICE_NAME: analysis-service
+      NOTIFICATION_URL: http://notification-service:5006
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "5006:5006"
+    environment:
+      SERVICE_NAME: notification-service
