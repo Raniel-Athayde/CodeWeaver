@@ -1,12 +1,17 @@
 import time
 import requests
+import logging
+
+# Configuração de Log padrão do Framework
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s - %(message)s')
+logger = logging.getLogger("CodeWeaver")
 
 class CodeWeaverEngine:
     """
     ❄️ FROZEN SPOT: O Core do Framework.
-    Define o fluxo de execução que nunca muda.
+    Define o fluxo de execução (Pipeline) que é invariante.
     """
-    def __init__(self, lexer, parser, interpreter, analyzer_url, notifier_url):
+    def __init__(self, lexer, parser, interpreter, analyzer_url=None, notifier_url=None):
         self.lexer = lexer
         self.parser = parser
         self.interpreter = interpreter
@@ -14,37 +19,63 @@ class CodeWeaverEngine:
         self.notifier_url = notifier_url
 
     def compile_and_run(self, source_code):
+        """
+        Executa o pipeline padrão: Tokenização -> Parsing -> Otimização -> Execução -> Notificação.
+        """
         start_time = time.time()
+        logger.info("Iniciando processamento de código...")
         
-        # 1. Lexer (Hotspot)
-        tokens = self.lexer.tokenize(source_code)
-        
-        # 2. Parser (Hotspot)
-        ast = self.parser.parse(tokens)
-        
-        # 3. Microserviço de Otimização (Infraestrutura do Framework)
+        try:
+            # 1. Lexer (🔥 Hotspot)
+            tokens = self.lexer.tokenize(source_code)
+            
+            # 2. Parser (🔥 Hotspot)
+            ast = self.parser.parse(tokens)
+            
+            # 3. Microserviço de Otimização (Infraestrutura)
+            if self.analyzer_url:
+                ast = self._optimize(ast)
+                
+            # 4. Interpreter (🔥 Hotspot)
+            output = self.interpreter.execute(ast)
+            
+            execution_time = (time.time() - start_time) * 1000
+            result = {
+                "status": "success",
+                "output": output,
+                "execution_time_ms": round(execution_time, 2)
+            }
+
+            # 5. Microserviço de Notificação (Infraestrutura)
+            if self.notifier_url:
+                self._notify(output, execution_time)
+
+            logger.info(f"Processamento concluído em {execution_time:.2f}ms")
+            return result
+
+        except Exception as e:
+            logger.error(f"Erro no pipeline: {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "execution_time_ms": round((time.time() - start_time) * 1000, 2)
+            }
+
+    def _optimize(self, ast):
         try:
             resp = requests.post(f"{self.analyzer_url}/optimize", json=ast, timeout=2)
             if resp.status_code == 200:
-                ast = resp.json()
-        except:
-            pass # Fallback resiliente
-            
-        # 4. Interpreter (Hotspot)
-        output = self.interpreter.execute(ast)
-        
-        execution_time = (time.time() - start_time) * 1000
-        
-        # 5. Microserviço de Notificação (Infraestrutura do Framework)
+                return resp.json()
+        except Exception as e:
+            logger.warning(f"Otimizador indisponível: {e}. Prosseguindo com AST original.")
+        return ast
+
+    def _notify(self, output, execution_time):
         try:
             requests.post(f"{self.notifier_url}/notify", json={
-                "message": f"Código processado via Framework em {execution_time:.2f}ms",
-                "output": output
+                "message": f"Execução via CodeWeaver finalizada.",
+                "execution_time": execution_time,
+                "output_preview": str(output)[:100]
             }, timeout=1)
-        except:
-            pass
-
-        return {
-            "output": output,
-            "execution_time_ms": round(execution_time, 2)
-        }
+        except Exception as e:
+            logger.warning(f"Serviço de notificação falhou: {e}")
