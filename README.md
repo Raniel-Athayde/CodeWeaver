@@ -1,10 +1,57 @@
-# 🧵 CodeWeaver
+# 🧵 CodeWeaver Framework
 
-**CodeWeaver** é um framework extensível projetado para simplificar a criação de compiladores e interpretadores. Ele fornece uma arquitetura de núcleo invariante (frozen spots) robusta que gerencia o ciclo de vida e o fluxo de execução do processamento de linguagens, expondo pontos de customização (hotspots) claros para você tecer a lógica da sua própria linguagem.
+O **CodeWeaver** é um framework modular para processamento de linguagens, projetado para demonstrar os conceitos de **Frozen Spots** (núcleo invariante) e **Hotspots** (pontos de customização) em uma arquitetura de **Microserviços**.
 
-## ✨ Funcionalidades Principais
+## 🏗️ Arquitetura do Projeto
 
-* **Inversão de Controle (IoC):** O framework dita o fluxo padrão de processamento de código; você só precisa plugar sua lógica de negócio.
-* **Pipeline Flexível:** Estrutura pronta para acoplamento de analisadores léxicos, sintáticos (parsing) e geradores de código.
-* **Hotspots Customizáveis:** Interface limpa para estender o comportamento do compilador/interpretador sem reinventar a roda.
-* **Foco na Gramática:** Gaste menos tempo brigando com a infraestrutura do sistema e mais tempo definindo a sua AST e suas regras gramaticais.
+O projeto é dividido em serviços independentes que se comunicam via HTTP:
+
+*   **Gateway (Porta 5000):** O coração do framework. Contém o motor de execução (Engine) e a implementação da linguagem customizada (MathLang). Oferece a interface Web.
+*   **Analyzer (Porta 5001):** Microserviço responsável por realizar otimizações na Árvore de Sintaxe Abstrata (AST).
+*   **Notifier (Porta 5002):** Microserviço simulado para envio de notificações e logs de processamento.
+
+## 📂 Estrutura de Pastas
+
+```text
+CodeWeaver/
+├── gateway/
+│   ├── app.py          # Engine do Framework + Hotspots (MathLang)
+│   └── templates/
+│       └── index.html  # Interface Frontend
+├── analyzer/
+│   └── app.py          # Serviço de Otimização Semântica
+├── notifier/
+│   └── app.py          # Serviço de Notificação
+└── Como executar.txt    # Guia rápido de inicialização
+```
+
+## 🚀 Como Executar
+
+Para rodar o projeto completo, abra **3 terminais** diferentes e execute os comandos abaixo na ordem:
+
+### 1. Iniciar o Analyzer
+```bash
+cd analyzer
+python app.py
+```
+
+### 2. Iniciar o Notifier
+```bash
+cd notifier
+python app.py
+```
+
+### 3. Iniciar o Gateway (Principal)
+```bash
+cd gateway
+python app.py
+```
+
+Após iniciar os três serviços, acesse:
+👉 **[http://localhost:5000](http://localhost:5000)**
+
+## 🛠️ Conceitos de Reuso Aplicados
+
+1.  **Frozen Spots (Engine):** A classe `CodeWeaverEngine` define o fluxo fixo de compilação (Lexer -> Parser -> Optimizer -> Interpreter) que não muda.
+2.  **Hotspots (Customização):** As classes `MathLangLexer`, `MathLangParser` e `MathLangInterpreter` são as extensões que definem como a nossa linguagem específica funciona.
+3.  **Microserviços:** A integração com serviços externos (`Analyzer`) demonstra como o framework pode ser estendido de forma distribuída.
