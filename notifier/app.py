@@ -1,16 +1,21 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-app = FastAPI(title="Microserviço de Notificação")
-
-class Notification(BaseModel):
-    message: str
-
-@app.post("/notify")
-def notify(notif: Notification):
-    print(f"📢 [NOTIFICADOR]: {notif.message}")
-    return {"status": "success", "message": "Notificação processada"}
+class NotifierHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path == '/notify':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            print(f"📢 [NOTIFICADOR]: {data.get('message')}")
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "ok"}).encode('utf-8'))
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5002)
+    server = HTTPServer(('0.0.0.0', 5002), NotifierHandler)
+    print("Notifier rodando na porta 5002...")
+    server.serve_forever()
