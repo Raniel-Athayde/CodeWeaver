@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 # Adiciona a raiz ao path para encontrar o framework
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -7,18 +8,22 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from framework.engine import CodeWeaverEngine
 from framework.service import BaseServiceHandler, start_service
 
-# 🚀 COMPONENTES DA APLICAÇÃO
+# 🚀 COMPONENTES DA APLICAÇÃO (HOTSPOTS)
 from modules.mathlang.lexer import MathLangLexer
 from modules.mathlang.parser import MathLangParser
 from modules.mathlang.interpreter import MathLangInterpreter
 
-# Instalação da engine do framework
+# Configuração de Log para a Aplicação
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("MathLangApp")
+
+# Instalação da engine do framework com as implementações da MathLang
 engine = CodeWeaverEngine(
-    MathLangLexer(), 
-    MathLangParser(), 
-    MathLangInterpreter(), 
-    "http://localhost:5001",
-    "http://localhost:5002"
+    lexer=MathLangLexer(), 
+    parser=MathLangParser(), 
+    interpreter=MathLangInterpreter(), 
+    analyzer_url="http://localhost:5001",
+    notifier_url="http://localhost:5002"
 )
 
 class GatewayHandler(BaseServiceHandler):
@@ -33,15 +38,20 @@ class GatewayHandler(BaseServiceHandler):
                 self.end_headers()
                 self.wfile.write(content)
             except Exception as e:
-                self.send_error(500, f"Erro: {e}")
+                logger.error(f"Erro ao servir index.html: {e}")
+                self.send_error(500, f"Erro interno: {e}")
         else:
             self.send_error(404)
 
     def do_POST(self):
         if self.path == '/api/compile':
             data = self.get_post_data()
-            result = engine.compile_and_run(data.get('code', ''))
+            code = data.get('code', '')
+            
+            # Delega o processamento para a Engine (Frozen Spot)
+            result = engine.compile_and_run(code)
             self.send_json(result)
 
 if __name__ == "__main__":
-    start_service(5000, GatewayHandler, "Gateway Principal")
+    logger.info("Iniciando Gateway da Aplicação MathLang...")
+    start_service(5000, GatewayHandler, "MathLang Gateway")
