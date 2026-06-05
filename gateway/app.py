@@ -10,7 +10,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from framework.engine import CodeWeaverEngine
 
 # 🚀 IMPORTAÇÃO DA APLICAÇÃO (HOTSPOT)
-from modules.mathlang import MathLangLexer, MathLangParser, MathLangInterpreter
+from modules.mathlang.lexer import MathLangLexer
+from modules.mathlang.parser import MathLangParser
+from modules.mathlang.interpreter import MathLangInterpreter
 
 # Instanciação da aplicação usando o framework
 engine = CodeWeaverEngine(
