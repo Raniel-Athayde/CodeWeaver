@@ -1,20 +1,18 @@
-import json
 import os
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# Adiciona a raiz do projeto ao path para importar o framework
+# Adiciona a raiz ao path para encontrar o framework
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# 🏛️ IMPORTAÇÃO DO FRAMEWORK (FROZEN SPOT)
 from framework.engine import CodeWeaverEngine
+from framework.service import BaseServiceHandler, start_service
 
-# 🚀 IMPORTAÇÃO DA APLICAÇÃO (HOTSPOT)
+# 🚀 COMPONENTES DA APLICAÇÃO
 from modules.mathlang.lexer import MathLangLexer
 from modules.mathlang.parser import MathLangParser
 from modules.mathlang.interpreter import MathLangInterpreter
 
-# Instanciação da aplicação usando o framework
+# Instalação da engine do framework
 engine = CodeWeaverEngine(
     MathLangLexer(), 
     MathLangParser(), 
@@ -23,7 +21,7 @@ engine = CodeWeaverEngine(
     "http://localhost:5002"
 )
 
-class GatewayHandler(BaseHTTPRequestHandler):
+class GatewayHandler(BaseServiceHandler):
     def do_GET(self):
         if self.path == '/':
             try:
@@ -32,30 +30,18 @@ class GatewayHandler(BaseHTTPRequestHandler):
                     content = f.read()
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html; charset=utf-8')
-                self.send_header('Content-Length', str(len(content)))
                 self.end_headers()
                 self.wfile.write(content)
             except Exception as e:
-                self.send_error(500, f"Erro ao carregar interface: {e}")
+                self.send_error(500, f"Erro: {e}")
         else:
             self.send_error(404)
 
     def do_POST(self):
         if self.path == '/api/compile':
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            data = json.loads(post_data)
-            
-            # Chama o motor do framework
+            data = self.get_post_data()
             result = engine.compile_and_run(data.get('code', ''))
-            
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(result).encode('utf-8'))
+            self.send_json(result)
 
 if __name__ == "__main__":
-    server = HTTPServer(('0.0.0.0', 5000), GatewayHandler)
-    print("🚀 Gateway (Aplicação) rodando na porta 5000...")
-    print("🏛️ Framework CodeWeaver carregado com sucesso.")
-    server.serve_forever()
+    start_service(5000, GatewayHandler, "Gateway Principal")

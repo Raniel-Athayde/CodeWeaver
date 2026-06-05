@@ -1,4 +1,6 @@
-class MathLangParser:
+from framework.interfaces import BaseParser
+
+class MathLangParser(BaseParser):
     def parse(self, tokens):
         # Estrutura básica: PRINT <expresso>
         ast = {"type": "PrintStatement", "children": [], "metadata": {}}

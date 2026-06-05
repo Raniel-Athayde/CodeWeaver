@@ -1,24 +1,23 @@
-import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
+import sys
 
-class AnalyzerHandler(BaseHTTPRequestHandler):
+# Adiciona a raiz ao path para encontrar o framework
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from framework.service import BaseServiceHandler, start_service
+
+class AnalyzerHandler(BaseServiceHandler):
     def do_POST(self):
         if self.path == '/optimize':
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            ast = json.loads(post_data)
+            ast = self.get_post_data()
             
-            # Lógica de otimização
+            # Lógica de otimização (Hotspot da Aplicação)
             if ast.get('type') == 'PrintStatement':
+                ast.setdefault('metadata', {})
                 ast['metadata']['optimized'] = True
-                ast['metadata']['service_info'] = "Otimizado via Standard Lib Server"
+                ast['metadata']['service_info'] = "Otimizado via Framework Service"
             
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(ast).encode('utf-8'))
+            self.send_json(ast)
 
 if __name__ == "__main__":
-    server = HTTPServer(('0.0.0.0', 5001), AnalyzerHandler)
-    print("Analyzer rodando na porta 5001...")
-    server.serve_forever()
+    start_service(5001, AnalyzerHandler, "Analyzer")

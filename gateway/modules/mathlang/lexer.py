@@ -1,4 +1,6 @@
-class MathLangLexer:
+from framework.interfaces import BaseLexer
+
+class MathLangLexer(BaseLexer):
     def tokenize(self, code):
         parts = code.strip().split()
         tokens = []

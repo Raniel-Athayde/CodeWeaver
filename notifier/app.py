@@ -1,21 +1,17 @@
-import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
+import sys
 
-class NotifierHandler(BaseHTTPRequestHandler):
+# Adiciona a raiz ao path para encontrar o framework
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from framework.service import BaseServiceHandler, start_service
+
+class NotifierHandler(BaseServiceHandler):
     def do_POST(self):
         if self.path == '/notify':
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            data = json.loads(post_data)
-            
+            data = self.get_post_data()
             print(f"📢 [NOTIFICADOR]: {data.get('message')}")
-            
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "ok"}).encode('utf-8'))
+            self.send_json({"status": "ok"})
 
 if __name__ == "__main__":
-    server = HTTPServer(('0.0.0.0', 5002), NotifierHandler)
-    print("Notifier rodando na porta 5002...")
-    server.serve_forever()
+    start_service(5002, NotifierHandler, "Notifier")

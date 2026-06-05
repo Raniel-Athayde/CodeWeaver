@@ -1,4 +1,6 @@
-class MathLangInterpreter:
+from framework.interfaces import BaseInterpreter
+
+class MathLangInterpreter(BaseInterpreter):
     def execute(self, ast):
         if ast["type"] != "PrintStatement" or not ast["children"]:
             return "Erro: Comando inválido."
