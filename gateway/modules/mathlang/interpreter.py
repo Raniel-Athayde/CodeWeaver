@@ -1,27 +1,48 @@
 from framework.interfaces import BaseInterpreter
 
 class MathLangInterpreter(BaseInterpreter):
-    def execute(self, ast):
-        if ast["type"] != "PrintStatement" or not ast["children"]:
-            return "Erro: Comando inválido."
+    def __init__(self):
+        self.variables = {}
 
+    def execute(self, ast):
+        if ast["type"] != "Program":
+            return "Erro: AST inválida."
+
+        self.variables = {} # Limpa variáveis a cada execução
+        outputs = []
         try:
-            result = self.evaluate(ast["children"][0])
+            for statement in ast.get("body", []):
+                if statement["type"] == "AssignmentStatement":
+                    name = statement["name"]
+                    value = self.evaluate(statement["expression"])
+                    self.variables[name] = value
+                
+                elif statement["type"] == "PrintStatement":
+                    result = self.evaluate(statement["expression"])
+                    
+                    if isinstance(result, float) and result.is_integer():
+                        result = int(result)
+                        
+                    prefix = "[MathLang Output]"
+                    if statement.get("metadata", {}).get("optimized") or ast.get("metadata", {}).get("optimized"):
+                        prefix = f"{prefix} (OPTIMIZED)"
+                        
+                    outputs.append(f"{prefix}: {result}")
             
-            if isinstance(result, float) and result.is_integer():
-                result = int(result)
-                
-            prefix = "[MathLang Output]"
-            if ast.get("metadata", {}).get("optimized"):
-                prefix = f"{prefix} (OPTIMIZED)"
-                
-            return f"{prefix}: {result}"
+            return "\n".join(outputs) if outputs else "Execução finalizada."
+            
         except Exception as e:
             return f"Erro de execução: {e}"
 
     def evaluate(self, node):
         if node["type"] == "LiteralNumber":
             return float(node["metadata"]["value"])
+        
+        if node["type"] == "VariableReference":
+            name = node["metadata"]["name"]
+            if name in self.variables:
+                return self.variables[name]
+            raise RuntimeError(f"Variável não definida: '{name}'")
         
         if node["type"] == "BinaryExpression":
             op = node["metadata"]["operator"]
