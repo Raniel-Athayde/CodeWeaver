@@ -11,12 +11,26 @@ class CodeWeaverEngine:
     ❄️ FROZEN SPOT: O Core do Framework.
     Define o fluxo de execução (Pipeline) que é invariante.
     """
-    def __init__(self, lexer, parser, interpreter, analyzer_url=None, notifier_url=None):
+    def __init__(self, lexer, parser, interpreter, analyzer_url=None, notifier_url=None, exporter_url=None):
         self.lexer = lexer
         self.parser = parser
         self.interpreter = interpreter
         self.analyzer_url = analyzer_url
         self.notifier_url = notifier_url
+        self.exporter_url = exporter_url
+
+    def export_code(self, source_code):
+        if not self.exporter_url:
+            return {"status": "error", "error": "Exporter service not configured"}
+        
+        try:
+            resp = requests.post(f"{self.exporter_url}/export", json={"code": source_code}, timeout=2)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception as e:
+            logger.error(f"Erro ao exportar: {e}")
+        
+        return {"status": "error", "error": "Failed to contact exporter service"}
 
     def compile_and_run(self, source_code):
         """

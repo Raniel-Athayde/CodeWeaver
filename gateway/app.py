@@ -23,7 +23,8 @@ engine = CodeWeaverEngine(
     parser=MathLangParser(), 
     interpreter=MathLangInterpreter(), 
     analyzer_url="http://localhost:5001",
-    notifier_url="http://localhost:5002"
+    notifier_url="http://localhost:5002",
+    exporter_url="http://localhost:5003"
 )
 
 class GatewayHandler(BaseServiceHandler):
@@ -50,6 +51,14 @@ class GatewayHandler(BaseServiceHandler):
             
             # Delega o processamento para a Engine (Frozen Spot)
             result = engine.compile_and_run(code)
+            self.send_json(result)
+        
+        elif self.path == '/api/export':
+            data = self.get_post_data()
+            code = data.get('code', '')
+            
+            # Chama o serviço de exportação através da Engine
+            result = engine.export_code(code)
             self.send_json(result)
 
 if __name__ == "__main__":

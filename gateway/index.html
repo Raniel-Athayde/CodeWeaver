@@ -17,6 +17,7 @@
         <p>Microserviços rodando em portas separadas.</p>
         <textarea id="code" placeholder="Ex: PRINT 123"></textarea>
         <button onclick="enviar()">Executar (Weave)</button>
+        <button onclick="exportar()" style="background: #27ae60; margin-top: 10px;">Exportar para TXT</button>
         <div id="res">Resultado aparecerá aqui...</div>
     </div>
 
@@ -36,6 +37,36 @@
                 resDiv.innerText = `SAÍDA: ${data.output}\nTEMPO: ${data.execution_time_ms}ms`;
             } catch (e) {
                 resDiv.innerText = "Erro ao conectar ao Gateway.";
+            }
+        }
+
+        async function exportar() {
+            const code = document.getElementById('code').value;
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await response.json();
+                
+                if (data.status === "error") {
+                    alert("Erro ao exportar: " + data.error);
+                    return;
+                }
+
+                // Cria um link temporário para download
+                const blob = new Blob([data.content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.filename || 'codigo.txt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (e) {
+                alert("Erro ao conectar ao Gateway.");
             }
         }
     </script>
