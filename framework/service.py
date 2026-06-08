@@ -18,5 +18,5 @@ class BaseServiceHandler(BaseHTTPRequestHandler):
 
 def start_service(port, handler_class, name):
     server = HTTPServer(('0.0.0.0', port), handler_class)
-    print(f"✅ {name} rodando na porta {port}...")
+    print(f"[OK] {name} rodando na porta {port}...")
     server.serve_forever()
