@@ -46,6 +46,31 @@ class CodeWeaverEngine:
         
         return {"status": "error", "error": "Failed to contact exporter service"}
 
+    def export_as_python(self, source_code):
+        """
+        Traduz código-fonte MathLang para Python (.py).
+        Gera a AST localmente e delega a conversão ao serviço de exportação.
+        """
+        if not self.exporter_url:
+            return {"status": "error", "error": "Exporter service not configured"}
+
+        try:
+            # Reutiliza os hotspots do framework para gerar a AST
+            tokens = self.lexer.tokenize(source_code)
+            ast = self.parser.parse(tokens)
+        except Exception as e:
+            logger.error(f"Erro ao gerar AST para exportação Python: {e}")
+            return {"status": "error", "error": str(e)}
+
+        try:
+            resp = requests.post(f"{self.exporter_url}/export/python", json=ast, timeout=2)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception as e:
+            logger.error(f"Erro ao contatar serviço de exportação Python: {e}")
+
+        return {"status": "error", "error": "Failed to contact exporter service"}
+
     def compile_and_run(self, source_code):
         """
         Executa o pipeline padrão: Tokenização -> Parsing -> Otimização -> Execução -> Notificação.

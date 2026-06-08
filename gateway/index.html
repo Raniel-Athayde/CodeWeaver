@@ -21,6 +21,9 @@
             <button onclick="exportar()" style="background: #27ae60; flex: 1;">Exportar para TXT</button>
             <button onclick="document.getElementById('fileInput').click()" style="background: #e67e22; flex: 1;">Importar de TXT</button>
         </div>
+        <div style="margin-top: 10px;">
+            <button onclick="gerarPython()" style="background: #8e44ad;">⬇️ Gerar Python (.py)</button>
+        </div>
         <input type="file" id="fileInput" style="display: none;" accept=".txt" onchange="importar(this)">
         <div id="res">Resultado aparecerá aqui...</div>
     </div>
@@ -76,6 +79,38 @@
                 document.body.removeChild(a);
             } catch (e) {
                 alert("Erro ao conectar ao Gateway.");
+            }
+        }
+
+        async function gerarPython() {
+            const code = document.getElementById('code').value;
+            const resDiv = document.getElementById('res');
+            try {
+                const response = await fetch('/api/export_python', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await response.json();
+
+                if (data.status === "error") {
+                    resDiv.innerText = "ERRO ao gerar Python: " + data.error;
+                    return;
+                }
+
+                // Faz o download do arquivo .py
+                const blob = new Blob([data.content], { type: 'text/x-python' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.filename || 'codigo.py';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                resDiv.innerText = `✅ Arquivo '${data.filename}' gerado com sucesso!`;
+            } catch (e) {
+                resDiv.innerText = "Erro ao conectar ao Gateway.";
             }
         }
 

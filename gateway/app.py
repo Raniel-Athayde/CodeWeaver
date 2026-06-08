@@ -69,6 +69,14 @@ class GatewayHandler(BaseServiceHandler):
             # Chama o serviço de importação através da Engine
             result = engine.import_code(file_content)
             self.send_json(result)
+        
+        elif self.path == '/api/export_python':
+            data = self.get_post_data()
+            code = data.get('code', '')
+            
+            # Traduz MathLang para Python através da Engine
+            result = engine.export_as_python(code)
+            self.send_json(result)
 
 if __name__ == "__main__":
     logger.info("Iniciando Gateway da Aplicação MathLang...")
