@@ -1,59 +1,74 @@
-# 🧵 CodeWeaver Framework
+# 🧵 CodeWeaver - Central Hub & Architecture Guide
 
-O **CodeWeaver** é um framework modular para processamento de linguagens, projetado para demonstrar os conceitos de **Frozen Spots** (núcleo invariante) e **Hotspots** (pontos de customização) em uma arquitetura de **Microserviços**.
+Bem-vindo ao repositório central do **CodeWeaver**. Este ramo (`main`) não contém código de implementação; ele serve como o **mapa arquitetural** e guia de navegação para todo o ecossistema do projeto.
 
-## 🏗️ Arquitetura do Projeto
+---
 
-O projeto é dividido em serviços independentes que se comunicam via HTTP:
+## 🌟 O que é o CodeWeaver?
 
-*   **Gateway (Porta 5000):** O coração do framework. Contém o motor de execução (Engine) e a implementação da linguagem customizada (MathLang). Oferece a interface Web.
-*   **Analyzer (Porta 5001):** Microserviço responsável por realizar otimizações na Árvore de Sintaxe Abstrata (AST).
-*   **Notifier (Porta 5002):** Microserviço simulado para envio de notificações e logs de processamento.
-*   **Exporter (Porta 5003):** Microserviço responsável por gerar e exportar arquivos de texto contendo o código fonte original.
-*   **Importer (Porta 5004):** Microserviço responsável por processar o upload e a leitura de arquivos de texto para carregar código no editor.
+O **CodeWeaver** é um framework extensível (Meta-Compiler Framework) projetado para simplificar a criação de linguagens de programação, interpretadores e compiladores. Ele utiliza o conceito de **Frozen Spots** (núcleo invariante) e **Hotspots** (pontos de extensão) para permitir que desenvolvedores foquem na gramática e lógica de suas linguagens, enquanto o framework gerencia o fluxo de execução e a infraestrutura.
 
-## 📂 Estrutura de Pastas
+---
 
-```text
-CodeWeaver/
-├── gateway/
-│   ├── app.py          # Engine do Framework + Hotspots (MathLang)
-│   └── index.html      # Interface Frontend
-├── analyzer/
-│   └── app.py          # Serviço de Otimização Semântica
-├── notifier/
-│   └── app.py          # Serviço de Notificação
-├── exporter/
-│   └── app.py          # Serviço de Exportação de Código
-├── importer/
-│   └── app.py          # Serviço de Importação de Código
-└── Como executar.txt    # Guia rápido de inicialização
-```
+## 🗺 Estratégia de Ramos (Branching Model)
 
-## 🚀 Como Executar
+Para manter a separação de interesses e facilitar o reuso, o projeto é organizado em três pilares fundamentais hospedados em ramos distintos:
 
-Para rodar o projeto completo, abra **5 terminais** diferentes e execute os comandos abaixo na ordem:
+### 📦 [Ramo: framework](https://github.com/Raniel-Athayde/CodeWeaver/tree/framework)
+O coração do sistema. Contém as abstrações e o motor de execução.
+- **Foco:** Interfaces (`BaseLexer`, `BaseParser`, `BaseInterpreter`), `Engine` de execução e inversão de controle.
+- **Uso:** Evolução do framework em si. Alterações aqui impactam todas as aplicações.
 
-### 1. Iniciar os Serviços de Infraestrutura (Analyzer, Notifier, Exporter, Importer)
+### 🚀 [Ramo: application](https://github.com/Raniel-Athayde/CodeWeaver/tree/application)
+A camada de implementação e uso prático.
+- **Foco:** Implementações concretas (ex: `MathLang`), analisadores específicos e lógica de negócio de alto nível.
+- **Uso:** Desenvolvimento de novas linguagens ou funcionalidades baseadas no framework.
+
+### 🧪 [Ramo: beta](https://github.com/Raniel-Athayde/CodeWeaver/tree/beta)
+O playground experimental e arquitetura distribuída.
+- **Foco:** Refatoração para **Microsserviços**, conteinerização com Docker e testes de escalabilidade.
+- **Uso:** Exploração de novas arquiteturas e prototipação de infraestrutura.
+
+---
+
+## 🛠 Como Navegar e Contribuir
+
+### 1. Clonando o Repositório
 ```bash
-python3 analyzer/app.py
-python3 notifier/app.py
-python3 exporter/app.py
-python3 importer/app.py
+git clone https://github.com/Raniel-Athayde/CodeWeaver.git
+cd CodeWeaver
 ```
 
-### 2. Iniciar o Gateway (Principal)
-```bash
-cd gateway
-python3 app.py
-```
+### 2. Escolhendo seu Contexto
+Dependendo do que você deseja fazer, mude para o ramo apropriado:
 
-Após iniciar os serviços, acesse:
-👉 **[http://localhost:5000](http://localhost:5000)**
+- **Para contribuir com o Core:**
+  ```bash
+  git checkout framework
+  ```
+- **Para criar uma nova Linguagem/App:**
+  ```bash
+  git checkout application
+  ```
+- **Para testar a Arquitetura de Microsserviços:**
+  ```bash
+  git checkout beta
+  ```
 
-## 🛠️ Conceitos de Reuso Aplicados
+### 3. Fluxo de Trabalho
+1. Identifique se sua mudança é estrutural (`framework`) ou funcional (`application`).
+2. Crie uma branch de funcionalidade a partir do ramo base correto.
+3. Submeta seu Pull Request para o ramo base correspondente.
 
-1.  **Frozen Spots (Engine):** A classe `CodeWeaverEngine` define o fluxo fixo de compilação (Lexer -> Parser -> Optimizer -> Interpreter) que não muda.
-2.  **Hotspots (Customização):** As classes `MathLangLexer`, `MathLangParser` e `MathLangInterpreter` são as extensões que definem como a nossa linguagem específica funciona.
-3.  **Microserviços:** A integração com serviços externos (`Analyzer`, `Exporter`) demonstra como o framework pode ser estendido de forma distribuída.
+---
 
+## 🏗 Princípios de Design
+
+O CodeWeaver é regido por princípios rígidos de engenharia de software para garantir extensibilidade:
+
+1. **Inversão de Controle (IoC):** O framework controla o fluxo (Tokenização -> Parsing -> Execução). Você apenas fornece as peças.
+2. **SOLID:** Ênfase total em Responsabilidade Única e Aberto/Fechado.
+3. **Pluggability:** Toda nova linguagem deve ser um "plug-in" sobre as interfaces do framework.
+
+---
+*CodeWeaver - Tecendo linguagens com simplicidade e elegância.*
