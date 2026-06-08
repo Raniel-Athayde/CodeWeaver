@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>🧵 CodeWeaver Microservices</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; background: #eee; }
+        .box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 80px; margin: 10px 0; }
+        button { background: #3498db; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; }
+        #res { margin-top: 20px; font-family: monospace; background: #333; color: #fff; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🧵 CodeWeaver</h1>
+        <p>Microserviços rodando em portas separadas.</p>
+        <textarea id="code" placeholder="Ex: PRINT 123"></textarea>
+        <button onclick="enviar()">Executar (Weave)</button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button onclick="exportar()" style="background: #27ae60; flex: 1;">Exportar para TXT</button>
+            <button onclick="document.getElementById('fileInput').click()" style="background: #e67e22; flex: 1;">Importar de TXT</button>
+        </div>
+        <input type="file" id="fileInput" style="display: none;" accept=".txt" onchange="importar(this)">
+        <div id="res">Resultado aparecerá aqui...</div>
+    </div>
+
+    <script>
+        async function enviar() {
+            const code = document.getElementById('code').value;
+            const resDiv = document.getElementById('res');
+            resDiv.innerText = "Processando...";
+            
+            try {
+                const response = await fetch('/api/compile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await response.json();
+                if (data.status === "success") {
+                    const prefix = data.optimized ? "SAÍDA (OTIMIZADA)" : "SAÍDA (NÃO OTIMIZADA)";
+                    resDiv.innerText = `${prefix}: ${data.output}\nTEMPO: ${data.execution_time_ms}ms`;
+                } else {
+                    resDiv.innerText = `ERRO: ${data.error}\nTEMPO: ${data.execution_time_ms}ms`;
+                }
+            } catch (e) {
+                resDiv.innerText = "Erro ao conectar ao Gateway.";
+            }
+        }
+
+        async function exportar() {
+            const code = document.getElementById('code').value;
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await response.json();
+                
+                if (data.status === "error") {
+                    alert("Erro ao exportar: " + data.error);
+                    return;
+                }
+
+                // Cria um link temporário para download
+                const blob = new Blob([data.content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.filename || 'codigo.txt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (e) {
+                alert("Erro ao conectar ao Gateway.");
+            }
+        }
+
+        async function importar(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64Content = e.target.result.split(',')[1];
+                try {
+                    const response = await fetch('/api/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ file_content: base64Content })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.status === "success") {
+                        document.getElementById('code').value = data.code;
+                        input.value = ''; // Reseta o input
+                    } else {
+                        alert("Erro ao importar: " + data.error);
+                    }
+                } catch (err) {
+                    alert("Erro ao conectar ao Gateway.");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>

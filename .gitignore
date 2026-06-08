@@ -1,0 +1,15 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+
+# Local environment / IDEs
+.vscode/
+.idea/
+.env
+
+# Project specific
+reference/
