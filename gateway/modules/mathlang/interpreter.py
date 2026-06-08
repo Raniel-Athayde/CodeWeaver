@@ -5,20 +5,8 @@ class MathLangInterpreter(BaseInterpreter):
         if ast["type"] != "PrintStatement" or not ast["children"]:
             return "Erro: Comando inválido."
 
-        child = ast["children"][0]
-        
         try:
-            if child["type"] == "LiteralNumber":
-                result = float(child["metadata"]["value"])
-            elif child["type"] == "BinaryExpression":
-                op = child["metadata"]["operator"]
-                v1 = float(child["children"][0]["metadata"]["value"])
-                v2 = float(child["children"][1]["metadata"]["value"])
-                
-                if op == "+": result = v1 + v2
-                elif op == "-": result = v1 - v2
-                elif op == "*": result = v1 * v2
-                elif op == "/": result = v1 / v2 if v2 != 0 else "Erro: Divisão por zero"
+            result = self.evaluate(ast["children"][0])
             
             if isinstance(result, float) and result.is_integer():
                 result = int(result)
@@ -30,3 +18,22 @@ class MathLangInterpreter(BaseInterpreter):
             return f"{prefix}: {result}"
         except Exception as e:
             return f"Erro de execução: {e}"
+
+    def evaluate(self, node):
+        if node["type"] == "LiteralNumber":
+            return float(node["metadata"]["value"])
+        
+        if node["type"] == "BinaryExpression":
+            op = node["metadata"]["operator"]
+            left = self.evaluate(node["children"][0])
+            right = self.evaluate(node["children"][1])
+            
+            if op == "+": return left + right
+            if op == "-": return left - right
+            if op == "*": return left * right
+            if op == "/":
+                if right == 0:
+                    raise RuntimeError("Divisão por zero")
+                return left / right
+        
+        raise RuntimeError(f"Tipo de nó desconhecido: {node['type']}")
