@@ -24,7 +24,8 @@ engine = CodeWeaverEngine(
     interpreter=MathLangInterpreter(), 
     analyzer_url="http://localhost:5001",
     notifier_url="http://localhost:5002",
-    exporter_url="http://localhost:5003"
+    exporter_url="http://localhost:5003",
+    importer_url="http://localhost:5004"
 )
 
 class GatewayHandler(BaseServiceHandler):
@@ -59,6 +60,14 @@ class GatewayHandler(BaseServiceHandler):
             
             # Chama o serviço de exportação através da Engine
             result = engine.export_code(code)
+            self.send_json(result)
+        
+        elif self.path == '/api/import':
+            data = self.get_post_data()
+            file_content = data.get('file_content', '')
+            
+            # Chama o serviço de importação através da Engine
+            result = engine.import_code(file_content)
             self.send_json(result)
 
 if __name__ == "__main__":

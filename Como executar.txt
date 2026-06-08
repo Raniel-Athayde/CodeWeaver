@@ -1,6 +1,6 @@
 Como Executar o CodeWeaver (Microserviços)
 
-Abra 4 terminais separados.
+Abra 5 terminais separados.
 
 # Terminal 1 (Serviço de Análise)
 cd analyzer
@@ -14,11 +14,15 @@ python3 app.py
 cd exporter
 python3 app.py
 
-# Terminal 4 (Gateway Principal)
+# Terminal 4 (Serviço de Importação)
+cd importer
+python3 app.py
+
+# Terminal 5 (Gateway Principal)
 cd gateway
 python3 app.py
 
 No Navegador:
 Acesse: http://localhost:5000
 
-Nota: O Gateway se comunica com os outros serviços via porta 5001, 5002 e 5003.
+Nota: O Gateway se comunica com os outros serviços via portas 5001 a 5004.

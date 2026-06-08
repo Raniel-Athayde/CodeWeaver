@@ -10,6 +10,7 @@ O projeto é dividido em serviços independentes que se comunicam via HTTP:
 *   **Analyzer (Porta 5001):** Microserviço responsável por realizar otimizações na Árvore de Sintaxe Abstrata (AST).
 *   **Notifier (Porta 5002):** Microserviço simulado para envio de notificações e logs de processamento.
 *   **Exporter (Porta 5003):** Microserviço responsável por gerar e exportar arquivos de texto contendo o código fonte original.
+*   **Importer (Porta 5004):** Microserviço responsável por processar o upload e a leitura de arquivos de texto para carregar código no editor.
 
 ## 📂 Estrutura de Pastas
 
@@ -24,32 +25,24 @@ CodeWeaver/
 │   └── app.py          # Serviço de Notificação
 ├── exporter/
 │   └── app.py          # Serviço de Exportação de Código
+├── importer/
+│   └── app.py          # Serviço de Importação de Código
 └── Como executar.txt    # Guia rápido de inicialização
 ```
 
 ## 🚀 Como Executar
 
-Para rodar o projeto completo, abra **4 terminais** diferentes e execute os comandos abaixo na ordem:
+Para rodar o projeto completo, abra **5 terminais** diferentes e execute os comandos abaixo na ordem:
 
-### 1. Iniciar o Analyzer
+### 1. Iniciar os Serviços de Infraestrutura (Analyzer, Notifier, Exporter, Importer)
 ```bash
-cd analyzer
-python3 app.py
+python3 analyzer/app.py
+python3 notifier/app.py
+python3 exporter/app.py
+python3 importer/app.py
 ```
 
-### 2. Iniciar o Notifier
-```bash
-cd notifier
-python3 app.py
-```
-
-### 3. Iniciar o Exporter
-```bash
-cd exporter
-python3 app.py
-```
-
-### 4. Iniciar o Gateway (Principal)
+### 2. Iniciar o Gateway (Principal)
 ```bash
 cd gateway
 python3 app.py
