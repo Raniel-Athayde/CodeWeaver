@@ -16,6 +16,12 @@ class AnalyzerHandler(BaseServiceHandler):
                 ast.setdefault('metadata', {})
                 ast['metadata']['optimized'] = True
                 ast['metadata']['service_info'] = "Otimizado via Framework Service"
+            elif ast.get('type') == 'Program':
+                for statement in ast.get('body', []):
+                    if statement.get('type') == 'PrintStatement':
+                        statement.setdefault('metadata', {})
+                        statement['metadata']['optimized'] = True
+                        statement['metadata']['service_info'] = "Otimizado via Framework Service"
             
             self.send_json(ast)
 

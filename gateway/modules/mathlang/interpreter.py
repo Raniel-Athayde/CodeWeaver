@@ -24,9 +24,6 @@ class MathLangInterpreter(BaseInterpreter):
                         result = int(result)
                         
                     prefix = "[MathLang Output]"
-                    if statement.get("metadata", {}).get("optimized") or ast.get("metadata", {}).get("optimized"):
-                        prefix = f"{prefix} (OPTIMIZED)"
-                        
                     outputs.append(f"{prefix}: {result}")
             
             return "\n".join(outputs) if outputs else "Execução finalizada."

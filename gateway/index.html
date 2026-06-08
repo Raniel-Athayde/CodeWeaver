@@ -38,7 +38,12 @@
                     body: JSON.stringify({ code: code })
                 });
                 const data = await response.json();
-                resDiv.innerText = `SAÍDA: ${data.output}\nTEMPO: ${data.execution_time_ms}ms`;
+                if (data.status === "success") {
+                    const prefix = data.optimized ? "SAÍDA (OTIMIZADA)" : "SAÍDA (NÃO OTIMIZADA)";
+                    resDiv.innerText = `${prefix}: ${data.output}\nTEMPO: ${data.execution_time_ms}ms`;
+                } else {
+                    resDiv.innerText = `ERRO: ${data.error}\nTEMPO: ${data.execution_time_ms}ms`;
+                }
             } catch (e) {
                 resDiv.innerText = "Erro ao conectar ao Gateway.";
             }

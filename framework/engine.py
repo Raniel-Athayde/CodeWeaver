@@ -61,8 +61,9 @@ class CodeWeaverEngine:
             ast = self.parser.parse(tokens)
             
             # 3. Microserviço de Otimização (Infraestrutura)
+            optimized = False
             if self.analyzer_url:
-                ast = self._optimize(ast)
+                ast, optimized = self._optimize(ast)
                 
             # 4. Interpreter (🔥 Hotspot)
             output = self.interpreter.execute(ast)
@@ -71,7 +72,8 @@ class CodeWeaverEngine:
             result = {
                 "status": "success",
                 "output": output,
-                "execution_time_ms": round(execution_time, 2)
+                "execution_time_ms": round(execution_time, 2),
+                "optimized": optimized
             }
 
             # 5. Microserviço de Notificação (Infraestrutura)
@@ -93,10 +95,10 @@ class CodeWeaverEngine:
         try:
             resp = requests.post(f"{self.analyzer_url}/optimize", json=ast, timeout=2)
             if resp.status_code == 200:
-                return resp.json()
+                return resp.json(), True
         except Exception as e:
             logger.warning(f"Otimizador indisponível: {e}. Prosseguindo com AST original.")
-        return ast
+        return ast, False
 
     def _notify(self, output, execution_time):
         try:
